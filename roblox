@@ -1,12 +1,3 @@
--- Hook vào hàm GetCountryRegionForPlayerAsync để giả lập khu vực là Mỹ (US)
-local GetCountryRegionForPlayerAsync = require(game:GetService("ReplicatedStorage").Library.Functions.GetCountryRegionForPlayerAsync)
-
--- Hook để luôn trả về "US" (Mỹ) thay vì khu vực mặc định
-hookfunction(GetCountryRegionForPlayerAsync, function(player, skipCache, cacheDuration)
-    return "US"  -- Giả lập khu vực là Mỹ
-end)
-
--- Tạo GUI để hiển thị khu vực người chơi
 local player = game.Players.LocalPlayer
 
 -- Tạo một ScreenGui để chứa thông tin khu vực
@@ -32,10 +23,10 @@ label.TextWrapped = true
 
 -- Hàm cập nhật thông tin khu vực người chơi
 local function updateRegionLabel()
-    -- Lấy khu vực người chơi (giả lập là "US")
-    local region = GetCountryRegionForPlayerAsync(player)
+    -- Giả lập khu vực là "US"
+    local region = "US"
     label.Text = "Khu vực của bạn: " .. region  -- Hiển thị khu vực "US" (Mỹ)
 end
 
--- Cập nhật GUI ngay khi game bắt đầu mà không cần cập nhật mỗi frame
+-- Cập nhật GUI ngay khi game bắt đầu
 updateRegionLabel()
