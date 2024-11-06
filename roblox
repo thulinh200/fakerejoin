@@ -1,15 +1,15 @@
--- Hook vào hàm GetCountryRegionForPlayerAsync để luôn giả lập khu vực là Pháp
+-- Hook vào hàm GetCountryRegionForPlayerAsync để giả lập khu vực là Tây Ban Nha (ES)
 local GetCountryRegionForPlayerAsync = require(game:GetService("ReplicatedStorage").Library.Functions.GetCountryRegionForPlayerAsync)
 
--- Hook hàm để luôn trả về "US" (Pháp) thay vì khu vực mặc định
+-- Hook vào hàm GetCountryRegionForPlayerAsync để luôn trả về "ES" (Tây Ban Nha)
 hookfunction(GetCountryRegionForPlayerAsync, function(player, skipCache, cacheDuration)
-    return "US"  -- Giả lập khu vực là Pháp
+    return "ES"  -- Giả lập khu vực là Tây Ban Nha
 end)
 
 -- Tạo GUI để hiển thị khu vực người chơi
 local player = game.Players.LocalPlayer
 
--- Tạo một ScreenGui để chứa thông tin
+-- Tạo một ScreenGui để chứa thông tin khu vực
 local screenGui = Instance.new("ScreenGui")
 screenGui.Parent = player.PlayerGui
 
@@ -30,13 +30,11 @@ label.TextSize = 24
 label.Text = "Khu vực của bạn: Đang tải..."
 label.TextWrapped = true
 
--- Hàm cập nhật thông tin khu vực người chơi
+-- Cập nhật khu vực chỉ một lần, không cần cập nhật liên tục
 local function updateRegionLabel()
-    local region = GetCountryRegionForPlayerAsync(player)  -- Lấy khu vực của người chơi (giả lập là "FR")
-    label.Text = "Khu vực của bạn: " .. region  -- Hiển thị khu vực là Pháp
+    local region = GetCountryRegionForPlayerAsync(player)  -- Lấy khu vực người chơi (giả lập là "ES")
+    label.Text = "Khu vực của bạn: " .. region  -- Hiển thị khu vực "ES" (Tây Ban Nha)
 end
 
--- Cập nhật liên tục để hiển thị khu vực giả lập "US"
-game:GetService("RunService").Heartbeat:Connect(function()
-    updateRegionLabel()  -- Cập nhật lại GUI mỗi frame (hoặc có thể mỗi vài giây nếu cần thiết)
-end)
+-- Cập nhật GUI ngay khi game bắt đầu mà không cần cập nhật mỗi frame
+updateRegionLabel()
