@@ -1,0 +1,41 @@
+-- Hook vào hàm GetCountryRegionForPlayerAsync để giả lập khu vực
+local GetCountryRegionForPlayerAsync = require(game:GetService("ReplicatedStorage").Library.Functions.GetCountryRegionForPlayerAsync)
+
+hookfunction(GetCountryRegionForPlayerAsync, function(player, skipCache, cacheDuration)
+    -- Luôn trả về "US" cho tất cả người chơi
+    return "US"
+end)
+
+-- Tạo GUI để hiển thị khu vực người chơi
+local player = game.Players.LocalPlayer
+
+-- Tạo một ScreenGui để hiển thị thông tin
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player.PlayerGui
+
+-- Tạo một Frame nhỏ hơn để chứa thông tin
+local frame = Instance.new("Frame")
+frame.Parent = screenGui
+frame.Size = UDim2.new(0, 200, 0, 100)  -- Kích thước nhỏ hơn (200px x 100px)
+frame.Position = UDim2.new(0.5, -100, 0.5, -50)  -- Căn giữa màn hình
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.BackgroundTransparency = 0.5  -- Làm trong suốt một chút để dễ nhìn
+
+-- Tạo một TextLabel nhỏ hơn để hiển thị khu vực
+local label = Instance.new("TextLabel")
+label.Parent = frame
+label.Size = UDim2.new(1, 0, 1, 0)  -- Chiếm hết không gian của frame
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.TextSize = 20  -- Kích thước chữ nhỏ hơn
+label.Text = "Khu vực của bạn: Đang tải..."
+label.TextWrapped = true
+label.TextAlign = Enum.TextAnchor.MiddleCenter  -- Căn giữa chữ trong TextLabel
+
+-- Cập nhật TextLabel với khu vực giả lập
+local function updateRegionLabel()
+    local region = GetCountryRegionForPlayerAsync(player)  -- Lấy khu vực của người chơi
+    label.Text = "Khu vực của bạn: " .. region  -- Hiển thị khu vực
+end
+
+-- Gọi hàm cập nhật
+updateRegionLabel()
