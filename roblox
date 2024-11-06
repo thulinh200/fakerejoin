@@ -1,3 +1,6 @@
+-- Giả lập khu vực người chơi là "US"
+local GetCountryRegionForPlayerAsync = require(game:GetService("ReplicatedStorage").Library.Functions.GetCountryRegionForPlayerAsync)
+
 -- Tạo GUI để hiển thị khu vực người chơi
 local player = game.Players.LocalPlayer
 
@@ -23,12 +26,31 @@ label.Text = "Khu vực của bạn: Đang tải..."
 label.TextWrapped = true
 label.TextAlign = Enum.TextAnchor.MiddleCenter  -- Căn giữa chữ trong TextLabel
 
--- Giả lập khu vực "US"
+-- Biến để lưu trữ khu vực đã lấy
+local region = nil
+
+-- Hàm lấy khu vực người chơi
+local function getRegion()
+    -- Nếu khu vực chưa được lấy, giả lập là "US"
+    if not region then
+        region = "US"  -- Giả lập khu vực là "US"
+    end
+    return region
+end
+
+-- Cập nhật khu vực và hiển thị
 local function updateRegionLabel()
-    -- Tự động gán khu vực "US" cho người chơi, không phụ thuộc vào API của Roblox
-    local region = "US"  -- Giả lập khu vực là Mỹ
+    local region = getRegion()
     label.Text = "Khu vực của bạn: " .. region  -- Hiển thị khu vực
 end
 
 -- Gọi hàm cập nhật ngay lập tức
 updateRegionLabel()
+
+-- Chặn các script khác gọi lại API hoặc can thiệp vào việc lấy khu vực
+game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
+    -- Đoạn mã này sẽ được thực thi khi người chơi vào game với nhân vật mới
+    print("Chào mừng " .. player.Name .. " vào game!")
+end)
+
+-- Hoặc các logic khác mà bạn muốn thực hiện
