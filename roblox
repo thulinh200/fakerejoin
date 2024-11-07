@@ -5,7 +5,7 @@ local countryDataCache = getconstants(GetCountryRegionForPlayerAsync)[11]
 -- Bảng để theo dõi hoạt động
 local activityLog = {}
 
--- Tạo một ScreenGui để hiển thị bảng chỉ một lần
+-- Tạo một ScreenaGui để hiển thị bảng chỉ một lần
 local screenGui = Instance.new("ScreenGui")
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
