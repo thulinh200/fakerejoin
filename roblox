@@ -5,6 +5,9 @@ local countryDataCache = getconstants(GetCountryRegionForPlayerAsync)[11]
 -- Bảng để theo dõi hoạt động
 local activityLog = {}
 
+-- Thời gian timeout (giới hạn thời gian chờ)
+local TIMEOUT_LIMIT = 5 -- Giới hạn 5 giây cho quá trình kiểm tra
+
 -- Tạo một ScreenGui để hiển thị bảng chỉ một lần
 local screenGui = Instance.new("ScreenGui")
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -29,7 +32,7 @@ titleLabel.Parent = frame
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Size = UDim2.new(1, 0, 1, -50)  -- Chiếm hết không gian còn lại dưới tiêu đề
 statusLabel.Position = UDim2.new(0, 0, 0, 50)
-statusLabel.Text = "Đang kiểm tra..."  -- Bắt đầu hiển thị thông báo "Đang kiểm tra..."
+statusLabel.Text = "Đang kiểm tra..."
 statusLabel.TextSize = 16
 statusLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
 statusLabel.BackgroundTransparency = 1
@@ -67,8 +70,20 @@ hookfunction(GetCountryRegionForPlayerAsync, function(player, skipCache, cacheDu
         return nil
     end
 
-    -- Lấy dữ liệu từ LocalizationService
-    local success, region = pcall(LocalizationService.GetCountryRegionForPlayerAsync, LocalizationService, player)
+    -- Thêm một biến để theo dõi thời gian bắt đầu kiểm tra
+    local startTime = tick()
+
+    -- Lấy dữ liệu từ LocalizationService với timeout
+    local success, region = pcall(function()
+        return LocalizationService:GetCountryRegionForPlayerAsync(player)
+    end)
+
+    -- Kiểm tra nếu thời gian vượt quá giới hạn
+    if tick() - startTime > TIMEOUT_LIMIT then
+        statusLabel.Text = "Kết quả: Quá thời gian chờ (Timeout)"
+        activityLog[player.UserId] = { Success = false, Message = "Timeout", Region = nil }
+        return nil
+    end
 
     -- Kiểm tra kết quả và cập nhật cache
     if success then
@@ -94,10 +109,4 @@ hookfunction(GetCountryRegionForPlayerAsync, function(player, skipCache, cacheDu
     end
 
     -- Trả về kết quả (dù là từ cache hay vừa mới fetch)
-    return countryDataCache[player.UserId].Value
-end)
-
--- Hàm để lấy log hoạt động
-function getActivityLog()
-    return activityLog
-end
+    return countryData
