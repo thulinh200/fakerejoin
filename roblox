@@ -5,7 +5,7 @@ local countryDataCache = getconstants(GetCountryRegionForPlayerAsync)[11]
 -- Bảng để theo dõi hoạt động
 local activityLog = {}
 
--- Tạo một ScreenaGui để hiển thị bảng chỉ một lần
+-- Tạo một ScreenGui để hiển thị bảng chỉ một lần
 local screenGui = Instance.new("ScreenGui")
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
@@ -40,6 +40,11 @@ statusLabel.Parent = frame
 hookfunction(GetCountryRegionForPlayerAsync, function(player, skipCache, cacheDuration)
     local cachedData = countryDataCache[player.UserId]
     cacheDuration = cacheDuration or 300 -- Thời gian cache mặc định là 300 giây
+
+    -- Cập nhật UI để thông báo đang kiểm tra
+    if statusLabel.Text ~= "Đang kiểm tra..." then
+        statusLabel.Text = "Đang kiểm tra..."
+    end
 
     -- Kiểm tra xem có dữ liệu trong cache và còn hiệu lực hay không
     if cachedData and (cachedData.Value or (workspace:GetServerTimeNow() - cachedData.Timestamp < cacheDuration)) then
@@ -96,5 +101,3 @@ end)
 function getActivityLog()
     return activityLog
 end
-
-
