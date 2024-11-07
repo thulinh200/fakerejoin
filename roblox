@@ -1,1 +1,100 @@
+local GetCountryRegionForPlayerAsync = require(game:GetService("ReplicatedStorage").Library.Functions.GetCountryRegionForPlayerAsync)
+local LocalizationService = game:GetService("LocalizationService")
+local countryDataCache = getconstants(GetCountryRegionForPlayerAsync)[11]
+
+-- Bảng để theo dõi hoạt động
+local activityLog = {}
+
+-- Tạo một ScreenGui để hiển thị bảng chỉ một lần
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Tạo một Frame để làm nền cho bảng chỉ một lần
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 400, 0, 300)
+frame.Position = UDim2.new(0.5, -200, 0.5, -150)
+frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+frame.Parent = screenGui
+
+-- Tạo một TextLabel để hiển thị tiêu đề
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 50)
+titleLabel.Text = "Thông Tin Quốc Gia / Vùng"
+titleLabel.TextSize = 20
+titleLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
+titleLabel.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+titleLabel.Parent = frame
+
+-- Tạo một TextLabel để hiển thị thông tin trạng thái
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, 0, 1, -50)  -- Chiếm hết không gian còn lại dưới tiêu đề
+statusLabel.Position = UDim2.new(0, 0, 0, 50)
+statusLabel.Text = "Đang kiểm tra..."
+statusLabel.TextSize = 16
+statusLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
+statusLabel.BackgroundTransparency = 1
+statusLabel.TextWrapped = true
+statusLabel.Parent = frame
+
+-- Hàm hook lại GetCountryRegionForPlayerAsync
+hookfunction(GetCountryRegionForPlayerAsync, function(player, skipCache, cacheDuration)
+    local cachedData = countryDataCache[player.UserId]
+    cacheDuration = cacheDuration or 300 -- Thời gian cache mặc định là 300 giây
+
+    -- Kiểm tra xem có dữ liệu trong cache và còn hiệu lực hay không
+    if cachedData and (cachedData.Value or (workspace:GetServerTimeNow() - cachedData.Timestamp < cacheDuration)) then
+        -- Nếu cache hợp lệ, không cần cập nhật lại UI
+        if statusLabel.Text ~= "Kết quả: " .. cachedData.Value then
+            statusLabel.Text = "Kết quả: " .. cachedData.Value
+        end
+        -- Log lại hoạt động thành công
+        activityLog[player.UserId] = { Success = true, Message = "Cache hit", Region = cachedData.Value }
+        return cachedData.Value
+    end
+
+    -- Nếu yêu cầu bỏ qua cache, trả về nil
+    if skipCache then
+        -- Log lại khi bỏ qua cache
+        activityLog[player.UserId] = { Success = false, Message = "Cache skipped", Region = nil }
+        if statusLabel.Text ~= "Kết quả: Không sử dụng Cache" then
+            statusLabel.Text = "Kết quả: Không sử dụng Cache"
+        end
+        return nil
+    end
+
+    -- Lấy dữ liệu từ LocalizationService
+    local success, region = pcall(LocalizationService.GetCountryRegionForPlayerAsync, LocalizationService, player)
+
+    -- Kiểm tra kết quả và cập nhật cache
+    if success then
+        countryDataCache[player.UserId] = {
+            Value = region,
+            Timestamp = workspace:GetServerTimeNow()
+        }
+        -- Log lại hoạt động thành công
+        activityLog[player.UserId] = { Success = true, Message = "Region fetched", Region = region }
+        if statusLabel.Text ~= "Kết quả: " .. region then
+            statusLabel.Text = "Kết quả: " .. region
+        end
+    else
+        -- Nếu có lỗi, lưu giá trị mặc định và log lại lỗi
+        countryDataCache[player.UserId] = {
+            Value = "FR", -- Mặc định là "FR" nếu gặp lỗi
+            Timestamp = workspace:GetServerTimeNow()
+        }
+        activityLog[player.UserId] = { Success = false, Message = "Error fetching region", Region = "FR" }
+        if statusLabel.Text ~= "Kết quả: Lỗi, dùng mặc định (FR)" then
+            statusLabel.Text = "Kết quả: Lỗi, dùng mặc định (FR)"
+        end
+    end
+
+    -- Trả về kết quả (dù là từ cache hay vừa mới fetch)
+    return countryDataCache[player.UserId].Value
+end)
+
+-- Hàm để lấy log hoạt động
+function getActivityLog()
+    return activityLog
+end
+
 
