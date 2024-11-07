@@ -29,7 +29,7 @@ titleLabel.Parent = frame
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Size = UDim2.new(1, 0, 1, -50)  -- Chiếm hết không gian còn lại dưới tiêu đề
 statusLabel.Position = UDim2.new(0, 0, 0, 50)
-statusLabel.Text = "Đang kiểm tra..."
+statusLabel.Text = "Đang kiểm tra..."  -- Bắt đầu hiển thị thông báo "Đang kiểm tra..."
 statusLabel.TextSize = 16
 statusLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
 statusLabel.BackgroundTransparency = 1
@@ -38,17 +38,17 @@ statusLabel.Parent = frame
 
 -- Hàm hook lại GetCountryRegionForPlayerAsync
 hookfunction(GetCountryRegionForPlayerAsync, function(player, skipCache, cacheDuration)
+    -- Cập nhật trạng thái UI khi bắt đầu
+    if statusLabel.Text ~= "Đang kiểm tra..." then
+        statusLabel.Text = "Đang kiểm tra..."  -- Đảm bảo khi hàm bắt đầu, UI hiển thị đúng trạng thái
+    end
+    
     local cachedData = countryDataCache[player.UserId]
     cacheDuration = cacheDuration or 300 -- Thời gian cache mặc định là 300 giây
 
-    -- Cập nhật UI để thông báo đang kiểm tra
-    if statusLabel.Text ~= "Đang kiểm tra..." then
-        statusLabel.Text = "Đang kiểm tra..."
-    end
-
     -- Kiểm tra xem có dữ liệu trong cache và còn hiệu lực hay không
     if cachedData and (cachedData.Value or (workspace:GetServerTimeNow() - cachedData.Timestamp < cacheDuration)) then
-        -- Nếu cache hợp lệ, không cần cập nhật lại UI
+        -- Nếu cache hợp lệ, cập nhật thông tin và trả về kết quả
         if statusLabel.Text ~= "Kết quả: " .. cachedData.Value then
             statusLabel.Text = "Kết quả: " .. cachedData.Value
         end
