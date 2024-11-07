@@ -1,112 +1,31 @@
-local GetCountryRegionForPlayerAsync = require(game:GetService("ReplicatedStorage").Library.Functions.GetCountryRegionForPlayerAsync)
-local LocalizationService = game:GetService("LocalizationService")
-local countryDataCache = getconstants(GetCountryRegionForPlayerAsync)[11]
+e = require(game:GetService("ReplicatedStorage").Library.Functions.GetCountryRegionForPlayerAsync)
+local l_LocalizationService_0 = game:GetService("LocalizationService");
 
--- Bảng để theo dõi hoạt động
-local activityLog = {}
+local v1 = getconstants(e)[11]
 
--- Thời gian timeout (giới hạn thời gian chờ)
-local TIMEOUT_LIMIT = 5 -- Giới hạn 5 giây cho quá trình kiểm tra
 
--- Tạo một ScreenGui để hiển thị bảng chỉ một lần
-local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-
--- Tạo một Frame để làm nền cho bảng chỉ một lần
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 400, 0, 300)
-frame.Position = UDim2.new(0.5, -200, 0.5, -150)
-frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-frame.Parent = screenGui
-
--- Tạo một TextLabel để hiển thị tiêu đề
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, 0, 0, 50)
-titleLabel.Text = "Thông Tin Quốc Gia / Vùng"
-titleLabel.TextSize = 20
-titleLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
-titleLabel.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-titleLabel.Parent = frame
-
--- Tạo một TextLabel để hiển thị thông tin trạng thái
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, 0, 1, -50)  -- Chiếm hết không gian còn lại dưới tiêu đề
-statusLabel.Position = UDim2.new(0, 0, 0, 50)
-statusLabel.Text = "Đang kiểm tra..."
-statusLabel.TextSize = 16
-statusLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
-statusLabel.BackgroundTransparency = 1
-statusLabel.TextWrapped = true
-statusLabel.Parent = frame
-
--- Hàm hook lại GetCountryRegionForPlayerAsync
-hookfunction(GetCountryRegionForPlayerAsync, function(player, skipCache, cacheDuration)
-    -- Cập nhật trạng thái UI khi bắt đầu
-    if statusLabel.Text ~= "Đang kiểm tra..." then
-        statusLabel.Text = "Đang kiểm tra..."  -- Đảm bảo khi hàm bắt đầu, UI hiển thị đúng trạng thái
-    end
-    
-    local cachedData = countryDataCache[player.UserId]
-    cacheDuration = cacheDuration or 300 -- Thời gian cache mặc định là 300 giây
-
-    -- Kiểm tra xem có dữ liệu trong cache và còn hiệu lực hay không
-    if cachedData and (cachedData.Value or (workspace:GetServerTimeNow() - cachedData.Timestamp < cacheDuration)) then
-        -- Nếu cache hợp lệ, cập nhật thông tin và trả về kết quả
-        if statusLabel.Text ~= "Kết quả: " .. cachedData.Value then
-            statusLabel.Text = "Kết quả: " .. cachedData.Value
+hookfunction(e,
+    function(v2, v3, v4)
+        local v5 = v1[v2.UserId];
+        if v5 and (v5.Value or workspace:GetServerTimeNow() - v5.Timestamp < (v4 or 300)) then
+            return v5.Value;
+        elseif v3 then
+            return nil;
+        else
+            local l_status_0, l_result_0 = pcall(l_LocalizationService_0.GetCountryRegionForPlayerAsync,
+                l_LocalizationService_0, v2);
+            if not l_status_0 or not l_result_0 then
+                v1[v2.UserId] = {
+                    Value = nil,
+                    Timestamp = workspace:GetServerTimeNow()
+                };
+                return nil;
+            else
+                v1[v2.UserId] = {
+                    Value = "US",
+                    Timestamp = workspace:GetServerTimeNow()
+                };
+                return "US";
+            end;
         end
-        -- Log lại hoạt động thành công
-        activityLog[player.UserId] = { Success = true, Message = "Cache hit", Region = cachedData.Value }
-        return cachedData.Value
-    end
-
-    -- Nếu yêu cầu bỏ qua cache, trả về nil
-    if skipCache then
-        -- Log lại khi bỏ qua cache
-        activityLog[player.UserId] = { Success = false, Message = "Cache skipped", Region = nil }
-        if statusLabel.Text ~= "Kết quả: Không sử dụng Cache" then
-            statusLabel.Text = "Kết quả: Không sử dụng Cache"
-        end
-        return nil
-    end
-
-    -- Thêm một biến để theo dõi thời gian bắt đầu kiểm tra
-    local startTime = tick()
-
-    -- Lấy dữ liệu từ LocalizationService với timeout
-    local success, region = pcall(function()
-        return LocalizationService:GetCountryRegionForPlayerAsync(player)
     end)
-
-    -- Kiểm tra nếu thời gian vượt quá giới hạn
-    if tick() - startTime > TIMEOUT_LIMIT then
-        statusLabel.Text = "Kết quả: Quá thời gian chờ (Timeout)"
-        activityLog[player.UserId] = { Success = false, Message = "Timeout", Region = nil }
-        return nil
-    end
-
-    -- Kiểm tra kết quả và cập nhật cache
-    if success then
-        countryDataCache[player.UserId] = {
-            Value = region,
-            Timestamp = workspace:GetServerTimeNow()
-        }
-        -- Log lại hoạt động thành công
-        activityLog[player.UserId] = { Success = true, Message = "Region fetched", Region = region }
-        if statusLabel.Text ~= "Kết quả: " .. region then
-            statusLabel.Text = "Kết quả: " .. region
-        end
-    else
-        -- Nếu có lỗi, lưu giá trị mặc định và log lại lỗi
-        countryDataCache[player.UserId] = {
-            Value = "FR", -- Mặc định là "FR" nếu gặp lỗi
-            Timestamp = workspace:GetServerTimeNow()
-        }
-        activityLog[player.UserId] = { Success = false, Message = "Error fetching region", Region = "FR" }
-        if statusLabel.Text ~= "Kết quả: Lỗi, dùng mặc định (FR)" then
-            statusLabel.Text = "Kết quả: Lỗi, dùng mặc định (FR)"
-        end
-    end
-
-    -- Trả về kết quả (dù là từ cache hay vừa mới fetch)
-    return countryData
