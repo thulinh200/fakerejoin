@@ -20,7 +20,7 @@ hookfunction(e, function(player, force, timeout)
         else
             -- Giả lập trả về "MX"
             cache[player.UserId] = { Value = "EU", Timestamp = workspace:GetServerTimeNow() }
-            return "EU"
+            return "MX"
         end
     end
 end)
