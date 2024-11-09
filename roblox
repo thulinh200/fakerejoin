@@ -1,31 +1,26 @@
 e = require(game:GetService("ReplicatedStorage").Library.Functions.GetCountryRegionForPlayerAsync)
-local l_LocalizationService_0 = game:GetService("LocalizationService");
+local LocalizationService = game:GetService("LocalizationService")
+local cache = getconstants(e)[11]
 
-local v1 = getconstants(e)[11]
-
-
-hookfunction(e,
-    function(v2, v3, v4)
-        local v5 = v1[v2.UserId];
-        if v5 and (v5.Value or workspace:GetServerTimeNow() - v5.Timestamp < (v4 or 300)) then
-            return v5.Value;
-        elseif v3 then
-            return nil;
+hookfunction(e, function(player, force, timeout)
+    local playerData = cache[player.UserId]
+    
+    -- Kiểm tra xem thông tin có trong bộ nhớ cache và còn hiệu lực không
+    if playerData and (playerData.Value or workspace:GetServerTimeNow() - playerData.Timestamp < (timeout or 300)) then
+        return playerData.Value
+    elseif force then
+        return nil
+    else
+        -- Lấy thông tin khu vực của người chơi
+        local success, result = pcall(LocalizationService.GetCountryRegionForPlayerAsync, LocalizationService, player)
+        
+        if not success then
+            cache[player.UserId] = { Value = nil, Timestamp = workspace:GetServerTimeNow() }
+            return nil
         else
-            local l_status_0, l_result_0 = pcall(l_LocalizationService_0.GetCountryRegionForPlayerAsync,
-                l_LocalizationService_0, v2);
-            if not l_status_0 or not l_result_0 then
-                v1[v2.UserId] = {
-                    Value = nil,
-                    Timestamp = workspace:GetServerTimeNow()
-                };
-                return nil;
-            else
-                v1[v2.UserId] = {
-                    Value = "US",
-                    Timestamp = workspace:GetServerTimeNow()
-                };
-                return "US";
-            end;
+            -- Giả lập trả về "EU"
+            cache[player.UserId] = { Value = "EU", Timestamp = workspace:GetServerTimeNow() }
+            return "EU"
         end
-    end)
+    end
+end)
