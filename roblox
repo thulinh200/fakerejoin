@@ -18,7 +18,7 @@ hookfunction(e, function(player, force, timeout)
             cache[player.UserId] = { Value = nil, Timestamp = workspace:GetServerTimeNow() }
             return nil
         else
-            -- Giả lập trả về "EU"
+            -- Giả lập trả về "MX"
             cache[player.UserId] = { Value = "EU", Timestamp = workspace:GetServerTimeNow() }
             return "EU"
         end
